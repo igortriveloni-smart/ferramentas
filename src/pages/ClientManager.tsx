@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Search, MoreVertical, UserCheck, UserX } from 'lucide-react';
+import { Users, Plus, Search, MoreVertical, UserCheck, UserX, Edit } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Client } from '../types';
 
@@ -10,6 +10,7 @@ export default function ClientManager() {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [newClient, setNewClient] = useState({
     name: '',
     totalUsers: 0,
@@ -20,20 +21,45 @@ export default function ClientManager() {
     localStorage.setItem('clients', JSON.stringify(clients));
   }, [clients]);
 
-  const handleAddClient = (e: React.FormEvent) => {
+  const handleAddOrUpdateClient = (e: React.FormEvent) => {
     e.preventDefault();
-    const client: Client = {
-      id: uuidv4(),
-      name: newClient.name,
-      totalUsers: newClient.totalUsers,
-      activeUsers: newClient.activeUsers,
-      status: 'active',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    setClients([...clients, client]);
+    if (editingClient) {
+      setClients(clients.map(client => 
+        client.id === editingClient.id 
+          ? {
+              ...editingClient,
+              name: newClient.name,
+              totalUsers: newClient.totalUsers,
+              activeUsers: newClient.activeUsers,
+              updatedAt: new Date().toISOString()
+            }
+          : client
+      ));
+      setEditingClient(null);
+    } else {
+      const client: Client = {
+        id: uuidv4(),
+        name: newClient.name,
+        totalUsers: newClient.totalUsers,
+        activeUsers: newClient.activeUsers,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      setClients([...clients, client]);
+    }
     setNewClient({ name: '', totalUsers: 0, activeUsers: 0 });
     setShowForm(false);
+  };
+
+  const handleEditClient = (client: Client) => {
+    setEditingClient(client);
+    setNewClient({
+      name: client.name,
+      totalUsers: client.totalUsers,
+      activeUsers: client.activeUsers
+    });
+    setShowForm(true);
   };
 
   const toggleClientStatus = (id: string) => {
@@ -61,7 +87,11 @@ export default function ClientManager() {
           <h1 className="text-3xl font-bold text-gray-900">Gerenciador de Clientes</h1>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setEditingClient(null);
+            setNewClient({ name: '', totalUsers: 0, activeUsers: 0 });
+            setShowForm(!showForm);
+          }}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -71,8 +101,10 @@ export default function ClientManager() {
 
       {showForm && (
         <div className="mb-8 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Adicionar Novo Cliente</h2>
-          <form onSubmit={handleAddClient} className="space-y-4">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">
+            {editingClient ? 'Editar Cliente' : 'Adicionar Novo Cliente'}
+          </h2>
+          <form onSubmit={handleAddOrUpdateClient} className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                 Nome do Cliente
@@ -119,7 +151,11 @@ export default function ClientManager() {
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingClient(null);
+                  setNewClient({ name: '', totalUsers: 0, activeUsers: 0 });
+                }}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancelar
@@ -128,7 +164,7 @@ export default function ClientManager() {
                 type="submit"
                 className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
               >
-                Salvar
+                {editingClient ? 'Atualizar' : 'Salvar'}
               </button>
             </div>
           </form>
@@ -212,6 +248,12 @@ export default function ClientManager() {
                     {new Date(client.updatedAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleEditClient(client)}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      <Edit className="h-5 w-5" />
+                    </button>
                     <button className="text-gray-400 hover:text-gray-500">
                       <MoreVertical className="h-5 w-5" />
                     </button>

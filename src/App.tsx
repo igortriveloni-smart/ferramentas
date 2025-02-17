@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { Calendar, Key, Users } from 'lucide-react';
+import Home from './pages/Home';
 import WeeklySchedule from './pages/WeeklySchedule';
 import PasswordGenerator from './pages/PasswordGenerator';
 import ClientManager from './pages/ClientManager';
@@ -41,6 +42,7 @@ function App() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <Routes>
+            <Route path="/home" element={<Home />} />
             <Route path="/" element={<WeeklySchedule />} />
             <Route path="/password-generator" element={<PasswordGenerator />} />
             <Route path="/client-manager" element={<ClientManager />} />
